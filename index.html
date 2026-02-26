@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devimpulso Hub — Centro de Operaciones</title>
+<meta name="description" content="Sistema de gestión de proyectos, tareas y lecturas para Devimpulso">
+<meta name="theme-color" content="#0a1628">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy-900: #0a1628; --navy-800: #111d35; --navy-700: #1a2a4a;
+  --navy-600: #243760; --navy-500: #2e4578;
+  --gold-500: #d4a017; --gold-400: #e8b42a; --gold-300: #f0c85a;
+  --bg-main: #0e1a2e; --bg-card: #152238; --bg-card-hover: #1a2a4a; --bg-input: #111d35;
+  --text-primary: #e8edf5; --text-secondary: #8a9bb8; --text-muted: #5a6f8e;
+  --border: #1e3050; --border-light: #253a58;
+  --red: #ef4444; --red-bg: #2d1518; --yellow: #eab308; --yellow-bg: #2d2a10;
+  --green: #22c55e; --green-bg: #0d2918; --blue: #3b82f6; --blue-bg: #101d36;
+  --purple: #a855f7; --purple-bg: #1f1530; --orange: #f97316; --orange-bg: #2d1a08;
+  --radius: 10px; --radius-sm: 6px; --shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg-main); color:var(--text-primary); min-height:100vh; }
+body.app-mode { display:flex; overflow:hidden; }
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--navy-600); border-radius:3px; }
+
+/* ========== AUTH SCREEN ========== */
+.auth-screen {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--navy-900) 0%, var(--bg-main) 50%, var(--navy-800) 100%);
+  padding:20px;
+}
+.auth-container {
+  width:100%; max-width:420px; background:var(--navy-800);
+  border:1px solid var(--border); border-radius:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5); overflow:hidden;
+}
+.auth-header {
+  padding:32px 32px 24px; text-align:center;
+  background:linear-gradient(135deg, rgba(212,160,23,0.08) 0%, transparent 100%);
+  border-bottom:1px solid var(--border);
+}
+.auth-logo {
+  width:56px; height:56px; margin:0 auto 16px;
+  background:linear-gradient(135deg, var(--gold-500), var(--gold-300));
+  border-radius:14px; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:28px; color:var(--navy-900);
+}
+.auth-title { font-size:22px; font-weight:700; margin-bottom:4px; }
+.auth-subtitle { font-size:14px; color:var(--text-muted); }
+.auth-body { padding:32px; }
+.auth-form-group { margin-bottom:16px; }
+.auth-form-group label { display:block; font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+.auth-form-group input {
+  width:100%; padding:12px 16px; background:var(--bg-input);
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  color:var(--text-primary); font-family:inherit; font-size:15px;
+  transition:border-color 0.15s;
+}
+.auth-form-group input:focus { outline:none; border-color:var(--gold-500); }
+.auth-btn {
+  width:100%; padding:13px; border:none; border-radius:var(--radius-sm);
+  font-family:inherit; font-size:15px; font-weight:600; cursor:pointer;
+  transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.auth-btn-primary { background:var(--gold-500); color:var(--navy-900); margin-bottom:12px; }
+.auth-btn-primary:hover { background:var(--gold-400); }
+.auth-btn-primary:disabled { opacity:0.6; cursor:not-allowed; }
+.auth-btn-google {
+  background:var(--navy-700); color:var(--text-primary);
+  border:1px solid var(--border-light); margin-bottom:12px;
+}
+.auth-btn-google:hover { background:var(--navy-600); }
+.auth-divider {
+  display:flex; align-items:center; gap:12px; margin:20px 0;
+  font-size:12px; color:var(--text-muted);
+}
+.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.auth-toggle { text-align:center; font-size:13px; color:var(--text-muted); margin-top:16px; }
+.auth-toggle a { color:var(--gold-400); cursor:pointer; text-decoration:none; font-weight:500; }
+.auth-toggle a:hover { text-decoration:underline; }
+.auth-error {
+  background:var(--red-bg); border:1px solid rgba(239,68,68,0.3);
+  color:var(--red); padding:10px 14px; border-radius:var(--radius-sm);
+  font-size:13px; margin-bottom:16px; display:none;
+}
+.auth-footer { padding:16px 32px; border-top:1px solid var(--border); text-align:center; }
+.auth-footer span { font-size:11px; color:var(--text-muted); }
+
+/* ========== LOADING ========== */
+.loading-screen {
+  position:fixed; inset:0; background:var(--bg-main);
+  display:flex; align-items:center; justify-content:center; z-index:9999;
+  flex-direction:column; gap:16px;
+}
+.loading-spinner {
+  width:40px; height:40px; border:3px solid var(--border);
+  border-top-color:var(--gold-500); border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { font-size:14px; color:var(--text-muted); }
+
+/* ========== TOAST ========== */
+.toast-container { position:fixed; top:20px; right:20px; z-index:10000; display:flex; flex-direction:column; gap:8px; }
+.toast {
+  padding:12px 20px; border-radius:var(--radius-sm); font-size:13px;
+  animation:toastIn 0.3s ease; box-shadow:var(--shadow); max-width:320px;
+}
+.toast-success { background:var(--green-bg); border:1px solid rgba(34,197,94,0.3); color:var(--green); }
+.toast-error { background:var(--red-bg); border:1px solid rgba(239,68,68,0.3); color:var(--red); }
+.toast-info { background:var(--blue-bg); border:1px solid rgba(59,130,246,0.3); color:var(--blue); }
+@keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  width:260px; min-width:260px; background:var(--navy-900);
+  border-right:1px solid var(--border); display:flex; flex-direction:column;
+  height:100vh; transition:all 0.3s; z-index:100;
+}
+.sidebar-header { padding:20px; border-bottom:1px solid var(--border); }
+.sidebar-logo { display:flex; align-items:center; gap:12px; }
+.sidebar-logo-icon {
+  width:36px; height:36px;
+  background:linear-gradient(135deg, var(--gold-500), var(--gold-300));
+  border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:18px; color:var(--navy-900);
+}
+.sidebar-logo-text { font-size:18px; font-weight:700; letter-spacing:-0.5px; }
+.sidebar-logo-sub { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.sidebar-nav { flex:1; overflow-y:auto; padding:12px; }
+.nav-section { margin-bottom:20px; }
+.nav-section-title { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-muted); padding:8px 12px; font-weight:600; }
+.nav-item {
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
+  border-radius:var(--radius-sm); cursor:pointer; font-size:14px;
+  color:var(--text-secondary); transition:all 0.15s; position:relative;
+}
+.nav-item:hover { background:var(--navy-800); color:var(--text-primary); }
+.nav-item.active { background:var(--navy-700); color:var(--gold-400); font-weight:500; }
+.nav-item.active::before {
+  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:3px; height:20px; background:var(--gold-500); border-radius:0 3px 3px 0;
+}
+.nav-icon { font-size:18px; width:24px; text-align:center; }
+.nav-badge { margin-left:auto; background:var(--gold-500); color:var(--navy-900); font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px; }
+.sidebar-footer { padding:16px 20px; border-top:1px solid var(--border); }
+.sidebar-user { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.sidebar-avatar {
+  width:32px; height:32px; border-radius:50%; background:var(--navy-600);
+  display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600;
+  color:var(--gold-400); flex-shrink:0;
+}
+.sidebar-user-info { flex:1; min-width:0; }
+.sidebar-user-name { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sidebar-user-email { font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sidebar-logout {
+  display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted);
+  cursor:pointer; padding:6px 0; transition:color 0.15s;
+}
+.sidebar-logout:hover { color:var(--red); }
+
+/* ========== MAIN, TOPBAR, BUTTONS ========== */
+.main { flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+.topbar {
+  padding:16px 28px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:16px; background:var(--navy-900);
+}
+.topbar-left { display:flex; align-items:center; gap:16px; }
+.topbar-title { font-size:22px; font-weight:700; letter-spacing:-0.5px; }
+.topbar-subtitle { font-size:13px; color:var(--text-muted); }
+.topbar-actions { display:flex; align-items:center; gap:10px; }
+.btn {
+  padding:8px 16px; border-radius:var(--radius-sm); border:none;
+  font-family:inherit; font-size:13px; font-weight:500; cursor:pointer;
+  display:flex; align-items:center; gap:6px; transition:all 0.15s;
+}
+.btn-primary { background:var(--gold-500); color:var(--navy-900); }
+.btn-primary:hover { background:var(--gold-400); }
+.btn-secondary { background:var(--navy-700); color:var(--text-primary); border:1px solid var(--border-light); }
+.btn-secondary:hover { background:var(--navy-600); }
+.btn-ghost { background:transparent; color:var(--text-secondary); }
+.btn-ghost:hover { background:var(--navy-800); color:var(--text-primary); }
+.btn-sm { padding:5px 10px; font-size:12px; }
+.btn-danger { background:var(--red); color:white; }
+.btn-danger:hover { opacity:0.9; }
+.btn-success { background:var(--green); color:white; }
+.btn-success:hover { opacity:0.9; }
+
+/* ========== TABS, FILTERS ========== */
+.view-tabs { display:flex; gap:4px; padding:0 28px; padding-top:12px; background:var(--navy-900); border-bottom:1px solid var(--border); }
+.view-tab { padding:10px 16px; font-size:13px; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.15s; font-weight:500; }
+.view-tab:hover { color:var(--text-secondary); }
+.view-tab.active { color:var(--gold-400); border-bottom-color:var(--gold-500); }
+.filters-bar { padding:12px 28px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.filter-chip { padding:5px 12px; border-radius:20px; font-size:12px; cursor:pointer; border:1px solid var(--border-light); background:var(--bg-card); color:var(--text-secondary); transition:all 0.15s; }
+.filter-chip:hover { border-color:var(--gold-500); color:var(--text-primary); }
+.filter-chip.active { background:var(--gold-500); color:var(--navy-900); border-color:var(--gold-500); font-weight:600; }
+
+/* ========== CONTENT ========== */
+.content { flex:1; overflow-y:auto; padding:24px 28px; }
+
+/* ========== KANBAN ========== */
+.kanban { display:flex; gap:16px; height:calc(100vh - 220px); overflow-x:auto; padding-bottom:16px; }
+.kanban-column { min-width:290px; width:290px; background:var(--navy-900); border-radius:var(--radius); border:1px solid var(--border); display:flex; flex-direction:column; max-height:100%; }
+.kanban-column-header { padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; }
+.kanban-column-title { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; }
+.kanban-column-count { font-size:12px; color:var(--text-muted); background:var(--navy-700); padding:2px 8px; border-radius:10px; }
+.kanban-column-body { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+.kanban-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; cursor:pointer; transition:all 0.15s; }
+.kanban-card:hover { border-color:var(--gold-500); transform:translateY(-1px); box-shadow:var(--shadow); }
+.kanban-card-title { font-size:13px; font-weight:500; margin-bottom:8px; line-height:1.4; }
+.kanban-card-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+
+/* ========== TABLE ========== */
+.table-container { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead th { padding:10px 14px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); border-bottom:1px solid var(--border); white-space:nowrap; background:var(--navy-900); position:sticky; top:0; z-index:5; }
+tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; cursor:pointer; }
+tbody tr:hover { background:var(--bg-card-hover); }
+tbody td { padding:12px 14px; color:var(--text-secondary); }
+tbody td:first-child { color:var(--text-primary); font-weight:500; }
+
+/* ========== TAGS ========== */
+.tag { display:inline-flex; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:600; white-space:nowrap; }
+.tag-red { background:var(--red-bg); color:var(--red); }
+.tag-yellow { background:var(--yellow-bg); color:var(--yellow); }
+.tag-green { background:var(--green-bg); color:var(--green); }
+.tag-blue { background:var(--blue-bg); color:var(--blue); }
+.tag-purple { background:var(--purple-bg); color:var(--purple); }
+.tag-gold { background:rgba(212,160,23,0.15); color:var(--gold-400); }
+.tag-orange { background:var(--orange-bg); color:var(--orange); }
+.tag-muted { background:var(--navy-700); color:var(--text-muted); }
+
+/* ========== STATS ========== */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+.stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
+.stat-label { font-size:12px; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.stat-value { font-size:28px; font-weight:700; }
+.stat-change { font-size:12px; margin-top:4px; }
+.section { margin-bottom:28px; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.section-title { font-size:16px; font-weight:600; }
+
+/* ========== MODAL ========== */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.modal { background:var(--navy-800); border:1px solid var(--border); border-radius:var(--radius); width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+.modal-header { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.modal-title { font-size:18px; font-weight:600; }
+.modal-close { width:32px; height:32px; border-radius:6px; border:none; background:transparent; color:var(--text-muted); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.modal-close:hover { background:var(--navy-700); color:var(--text-primary); }
+.modal-body { padding:24px; }
+.modal-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+
+/* ========== FORM ========== */
+.form-group { margin-bottom:16px; }
+.form-label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+.form-input,.form-select,.form-textarea { width:100%; padding:10px 14px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:inherit; font-size:14px; transition:border-color 0.15s; }
+.form-input:focus,.form-select:focus,.form-textarea:focus { outline:none; border-color:var(--gold-500); }
+.form-select { cursor:pointer; }
+.form-select option { background:var(--navy-800); }
+.form-textarea { resize:vertical; min-height:80px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-hint { font-size:11px; color:var(--text-muted); margin-top:4px; }
+
+/* ========== DAILY ========== */
+.daily-section { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; }
+.daily-section-header { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; font-weight:600; font-size:14px; }
+.daily-section-body { padding:4px 0; }
+.daily-task { padding:12px 18px; display:flex; align-items:center; gap:12px; transition:background 0.1s; cursor:pointer; }
+.daily-task:hover { background:var(--bg-card-hover); }
+.daily-check { width:20px; height:20px; border-radius:50%; border:2px solid var(--border-light); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; font-size:11px; color:transparent; }
+.daily-check:hover { border-color:var(--gold-500); }
+.daily-check.checked { background:var(--green); border-color:var(--green); color:white; }
+.daily-task-info { flex:1; min-width:0; }
+.daily-task-title { font-size:14px; font-weight:500; }
+.daily-task-title.completed { text-decoration:line-through; color:var(--text-muted); }
+.daily-task-sub { font-size:12px; color:var(--text-muted); margin-top:2px; display:flex; gap:10px; flex-wrap:wrap; }
+.empty-state { text-align:center; padding:40px 20px; color:var(--text-muted); }
+.empty-state-icon { font-size:48px; margin-bottom:12px; }
+.empty-state-text { font-size:14px; }
+
+/* ========== PROGRESS ========== */
+.progress-bar { height:4px; background:var(--navy-700); border-radius:2px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:2px; transition:width 0.3s; }
+.pf-gold { background:var(--gold-500); } .pf-green { background:var(--green); }
+.pf-blue { background:var(--blue); } .pf-red { background:var(--red); } .pf-orange { background:var(--orange); }
+
+/* ========== READING ========== */
+.reading-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+.reading-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all 0.2s; cursor:pointer; }
+.reading-card:hover { border-color:var(--gold-500); transform:translateY(-2px); box-shadow:var(--shadow); }
+.reading-card-accent { height:4px; width:100%; }
+.reading-card-body { padding:20px; }
+.reading-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.reading-card-title { font-size:15px; font-weight:600; line-height:1.3; flex:1; margin-right:10px; }
+.reading-card-percent { font-size:24px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+.reading-card-author { font-size:12px; color:var(--text-muted); margin-bottom:14px; }
+.reading-card-progress { margin-bottom:14px; }
+.reading-card-progress .progress-bar { height:8px; border-radius:4px; }
+.reading-card-progress .progress-fill { border-radius:4px; }
+.reading-card-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+.reading-stat { text-align:center; }
+.reading-stat-value { font-size:16px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+.reading-stat-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
+.reading-daily-target { background:var(--navy-700); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+.reading-daily-label { font-size:12px; color:var(--text-muted); }
+.reading-daily-value { font-size:18px; font-weight:700; color:var(--gold-400); font-family:'JetBrains Mono',monospace; }
+.reading-daily-sub { font-size:11px; color:var(--text-muted); }
+.log-pages-row { display:flex; align-items:center; gap:8px; margin-top:10px; }
+.log-pages-input { width:80px; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-family:'JetBrains Mono',monospace; font-size:14px; text-align:center; }
+.log-pages-input:focus { outline:none; border-color:var(--gold-500); }
+.reading-card-footer { display:flex; align-items:center; justify-content:space-between; padding-top:14px; border-top:1px solid var(--border); }
+.reading-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+.reading-summary-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; text-align:center; }
+.reading-summary-value { font-size:22px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+.reading-summary-label { font-size:11px; color:var(--text-muted); margin-top:2px; text-transform:uppercase; letter-spacing:0.5px; }
+.reading-log-entry { display:flex; align-items:center; gap:12px; padding:10px 14px; border-bottom:1px solid var(--border); font-size:13px; }
+.reading-log-date { color:var(--text-muted); min-width:90px; font-family:'JetBrains Mono',monospace; font-size:12px; }
+.reading-log-pages { font-weight:600; color:var(--gold-400); min-width:60px; font-family:'JetBrains Mono',monospace; }
+
+/* ========== SYNC INDICATOR ========== */
+.sync-indicator { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 8px; border-radius:10px; }
+.sync-ok { background:var(--green-bg); color:var(--green); }
+.sync-saving { background:var(--yellow-bg); color:var(--yellow); }
+.sync-error { background:var(--red-bg); color:var(--red); }
+
+/* ========== MOBILE ========== */
+.menu-toggle { display:none; width:36px; height:36px; border:none; background:var(--navy-700); color:var(--text-primary); border-radius:var(--radius-sm); font-size:20px; cursor:pointer; align-items:center; justify-content:center; }
+@media (max-width:768px) {
+  .sidebar { position:fixed; left:-260px; top:0; height:100vh; z-index:200; }
+  .sidebar.open { left:0; }
+  .menu-toggle { display:flex; }
+  .topbar { padding:12px 16px; }
+  .content { padding:16px; }
+  .filters-bar { padding:10px 16px; }
+  .view-tabs { padding:0 16px; }
+  .kanban-column { min-width:260px; width:260px; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .form-row { grid-template-columns:1fr; }
+  .reading-grid { grid-template-columns:1fr; }
+  .reading-summary { grid-template-columns:1fr 1fr; }
+}
+.sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:150; }
+.sidebar-overlay.show { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.kanban-card,.daily-task,tbody tr,.stat-card,.reading-card { animation:fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Iniciando Devimpulso Hub...</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- AUTH -->
+<div class="auth-screen" id="authScreen" style="display:none">
+  <div class="auth-container">
+    <div class="auth-header">
+      <div class="auth-logo">D</div>
+      <div class="auth-title">Devimpulso Hub</div>
+      <div class="auth-subtitle">Centro de Operaciones</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-error" id="authError"></div>
+      <div id="authFormLogin">
+        <div class="auth-form-group">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="tu@email.com" autocomplete="email">
+        </div>
+        <div class="auth-form-group">
+          <label>Contraseña</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="auth-btn auth-btn-primary" id="btnLogin" onclick="handleLogin()">Iniciar sesión</button>
+        <div class="auth-divider">o</div>
+        <button class="auth-btn auth-btn-google" onclick="handleGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Continuar con Google
+        </button>
+        <div class="auth-toggle">¿No tenés cuenta? <a onclick="toggleAuthForm('register')">Registrate</a></div>
+      </div>
+      <div id="authFormRegister" style="display:none">
+        <div class="auth-form-group">
+          <label>Nombre</label>
+          <input type="text" id="registerName" placeholder="Tu nombre" autocomplete="name">
+        </div>
+        <div class="auth-form-group">
+          <label>Email</label>
+          <input type="email" id="registerEmail" placeholder="tu@email.com" autocomplete="email">
+        </div>
+        <div class="auth-form-group">
+          <label>Contraseña</label>
+          <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <button class="auth-btn auth-btn-primary" onclick="handleRegister()">Crear cuenta</button>
+        <div class="auth-divider">o</div>
+        <button class="auth-btn auth-btn-google" onclick="handleGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Continuar con Google
+        </button>
+        <div class="auth-toggle">¿Ya tenés cuenta? <a onclick="toggleAuthForm('login')">Iniciá sesión</a></div>
+      </div>
+    </div>
+    <div class="auth-footer"><span>🔒 Datos protegidos con Firebase · Devimpulso Hub v2.0</span></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appContainer" style="display:none">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">D</div>
+        <div><div class="sidebar-logo-text">Devimpulso</div><div class="sidebar-logo-sub">Centro de Operaciones</div></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">General</div>
+        <div class="nav-item active" onclick="nav('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+        <div class="nav-item" onclick="nav('daily')"><span class="nav-icon">📋</span> Mi Día <span class="nav-badge" id="dailyBadge">0</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Bases de Datos</div>
+        <div class="nav-item" onclick="nav('tasks')"><span class="nav-icon">✅</span> Tareas</div>
+        <div class="nav-item" onclick="nav('projects')"><span class="nav-icon">📁</span> Proyectos</div>
+        <div class="nav-item" onclick="nav('clients')"><span class="nav-icon">🧑</span> Clientes</div>
+        <div class="nav-item" onclick="nav('subjects')"><span class="nav-icon">📚</span> Materias</div>
+        <div class="nav-item" onclick="nav('deliverables')"><span class="nav-icon">📝</span> Entregas</div>
+        <div class="nav-item" onclick="nav('readings')"><span class="nav-icon">📖</span> Lecturas <span class="nav-badge" id="readingBadge">0</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Vistas Rápidas</div>
+        <div class="nav-item" onclick="nav('kanban-dev')"><span class="nav-icon">💻</span> Kanban Dev</div>
+        <div class="nav-item" onclick="nav('kanban-facu')"><span class="nav-icon">📚</span> Kanban Facu</div>
+        <div class="nav-item" onclick="nav('kanban-sede')"><span class="nav-icon">🏫</span> Kanban Sede</div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="userAvatar">R</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">Usuario</div>
+          <div class="sidebar-user-email" id="userEmail">email@ejemplo.com</div>
+        </div>
+      </div>
+      <div class="sidebar-logout" onclick="handleLogout()">🚪 Cerrar sesión</div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:6px">
+        <span id="syncStatus" class="sync-indicator sync-ok">● Sincronizado</span>
+      </div>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="event.target===this&&closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// =============================================
+// FIREBASE INIT
+// =============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyA7abe92yRLSmnIC_7oMSWdybj5SHGexZ8",
+  authDomain: "sistema-1131.firebaseapp.com",
+  projectId: "sistema-1131",
+  storageBucket: "sistema-1131.firebasestorage.app",
+  messagingSenderId: "703229123632",
+  appId: "1:703229123632:web:d3e1314761c8fb6585e1f5",
+  measurementId: "G-2E39X0GERQ"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Enable offline persistence
+db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+  if (err.code === 'failed-precondition') console.warn('Persistence failed: multiple tabs open');
+  else if (err.code === 'unimplemented') console.warn('Persistence not available');
+});
+
+// =============================================
+// STATE
+// =============================================
+let currentUser = null;
+let data = { tasks:[], projects:[], clients:[], subjects:[], deliverables:[], readings:[], nextId:1 };
+let currentView = 'dashboard';
+let currentViewTab = 'kanban';
+let readingViewTab = 'cards';
+let activeFilters = { frente:'all', priority:'all', status:'all' };
+let isSaving = false;
+let unsubscribers = [];
+
+// =============================================
+// AUTH
+// =============================================
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('loadingScreen').style.display = 'flex';
+    document.getElementById('authScreen').style.display = 'none';
+    await loadUserData();
+    showApp();
+  } else {
+    currentUser = null;
+    unsubscribers.forEach(fn => fn());
+    unsubscribers = [];
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('appContainer').style.display = 'none';
+    document.body.classList.remove('app-mode');
+  }
+});
+
+function toggleAuthForm(mode) {
+  document.getElementById('authFormLogin').style.display = mode==='login'?'block':'none';
+  document.getElementById('authFormRegister').style.display = mode==='register'?'block':'none';
+  document.getElementById('authError').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  if (!email || !pass) return showAuthError('Completá email y contraseña');
+  try {
+    document.getElementById('btnLogin').disabled = true;
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    showAuthError(getAuthErrorMsg(e.code));
+    document.getElementById('btnLogin').disabled = false;
+  }
+}
+
+async function handleRegister() {
+  const name = document.getElementById('registerName').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  const pass = document.getElementById('registerPassword').value;
+  if (!name || !email || !pass) return showAuthError('Completá todos los campos');
+  if (pass.length < 6) return showAuthError('La contraseña debe tener al menos 6 caracteres');
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.updateProfile({ displayName: name });
+    await initializeUserData(cred.user);
+  } catch(e) { showAuthError(getAuthErrorMsg(e.code)); }
+}
+
+async function handleGoogleLogin() {
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await auth.signInWithPopup(provider);
+    // Check if new user
+    const doc = await db.collection('users').doc(result.user.uid).get();
+    if (!doc.exists) await initializeUserData(result.user);
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user') showAuthError(getAuthErrorMsg(e.code));
+  }
+}
+
+function handleLogout() {
+  if (confirm('¿Cerrar sesión?')) auth.signOut();
+}
+
+function getAuthErrorMsg(code) {
+  const msgs = {
+    'auth/email-already-in-use': 'Este email ya tiene una cuenta',
+    'auth/invalid-email': 'Email inválido',
+    'auth/user-not-found': 'No existe una cuenta con este email',
+    'auth/wrong-password': 'Contraseña incorrecta',
+    'auth/invalid-credential': 'Email o contraseña incorrectos',
+    'auth/weak-password': 'La contraseña es muy débil (mínimo 6 caracteres)',
+    'auth/too-many-requests': 'Demasiados intentos. Esperá un momento',
+    'auth/network-request-failed': 'Error de conexión. Revisá tu internet',
+  };
+  return msgs[code] || 'Error de autenticación. Intentá de nuevo.';
+}
+
+// Enter key on login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('authScreen').style.display !== 'none') {
+    if (document.getElementById('authFormLogin').style.display !== 'none') handleLogin();
+    else handleRegister();
+  }
+});
+
+// =============================================
+// FIRESTORE DATA
+// =============================================
+async function initializeUserData(user) {
+  const defaultData = getDefaultData();
+  const batch = db.batch();
+  const userRef = db.collection('users').doc(user.uid);
+  batch.set(userRef, { name: user.displayName || '', email: user.email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+
+  const collections = ['tasks','projects','clients','subjects','deliverables','readings'];
+  for (const col of collections) {
+    for (const item of defaultData[col]) {
+      const ref = userRef.collection(col).doc();
+      batch.set(ref, { ...item, id: undefined }); // Firestore assigns ID
+    }
+  }
+  await batch.commit();
+}
+
+async function loadUserData() {
+  const uid = currentUser.uid;
+  const userRef = db.collection('users').doc(uid);
+
+  // Check if user doc exists, if not initialize
+  const userDoc = await userRef.get();
+  if (!userDoc.exists) await initializeUserData(currentUser);
+
+  // Load all collections
+  const collections = ['tasks','projects','clients','subjects','deliverables','readings'];
+  for (const col of collections) {
+    const snapshot = await userRef.collection(col).get();
+    data[col] = snapshot.docs.map(doc => ({ ...doc.data(), _docId: doc.id }));
+  }
+  setSyncStatus('ok');
+}
+
+function listenToCollection(colName) {
+  const uid = currentUser.uid;
+  const unsub = db.collection('users').doc(uid).collection(colName)
+    .onSnapshot(snapshot => {
+      data[colName] = snapshot.docs.map(doc => ({ ...doc.data(), _docId: doc.id }));
+      render();
+      setSyncStatus('ok');
+    }, err => {
+      console.error(`Listen error ${colName}:`, err);
+      setSyncStatus('error');
+    });
+  unsubscribers.push(unsub);
+}
+
+async function saveDoc(colName, item) {
+  setSyncStatus('saving');
+  const uid = currentUser.uid;
+  const colRef = db.collection('users').doc(uid).collection(colName);
+  try {
+    if (item._docId) {
+      const { _docId, ...cleanItem } = item;
+      await colRef.doc(_docId).set(cleanItem, { merge: true });
+    } else {
+      const ref = await colRef.add(item);
+      item._docId = ref.id;
+    }
+    setSyncStatus('ok');
+    toast('Guardado correctamente', 'success');
+    return item;
+  } catch(e) {
+    console.error('Save error:', e);
+    setSyncStatus('error');
+    toast('Error al guardar. Revisá tu conexión.', 'error');
+    return null;
+  }
+}
+
+async function deleteDoc(colName, docId) {
+  setSyncStatus('saving');
+  const uid = currentUser.uid;
+  try {
+    await db.collection('users').doc(uid).collection(colName).doc(docId).delete();
+    setSyncStatus('ok');
+    toast('Eliminado', 'success');
+  } catch(e) {
+    console.error('Delete error:', e);
+    setSyncStatus('error');
+    toast('Error al eliminar', 'error');
+  }
+}
+
+function setSyncStatus(status) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  if (status === 'ok') { el.className = 'sync-indicator sync-ok'; el.textContent = '● Sincronizado'; }
+  else if (status === 'saving') { el.className = 'sync-indicator sync-saving'; el.textContent = '● Guardando...'; }
+  else { el.className = 'sync-indicator sync-error'; el.textContent = '● Sin conexión'; }
+}
+
+// =============================================
+// DEFAULT DATA
+// =============================================
+function getDefaultData() {
+  return {
+    tasks: [
+      { title:'Implementar autenticación Firebase', status:'progress', priority:'high', size:'big', frente:'dev', project:'Sistema CAP', context:'home', energy:'high', date:getToday(), notes:'Usar Firebase Auth con Google y Email' },
+      { title:'Estudiar cap. 4 Psicología del Desarrollo', status:'pending', priority:'medium', size:'medium', frente:'facu', project:'Cursada Psico', context:'facu', energy:'medium', date:getToday(), notes:'' },
+      { title:'Responder email Zona 1131', status:'pending', priority:'high', size:'small', frente:'dev', project:'Actuaciones', context:'mobile', energy:'low', date:getToday(), notes:'' },
+      { title:'Preparar informe semanal sede', status:'pending', priority:'medium', size:'medium', frente:'sede', project:'Gestión Sede', context:'sede', energy:'medium', date:getToday(), notes:'' },
+    ],
+    projects: [
+      { name:'Sistema CAP', frente:'dev', client:'Zona 1131', status:'progress', priority:'high', deadline:'2026-06-30', amount:150000, repo:'devimpulso-cap-system', stack:'Firebase, JavaScript, Claude API' },
+      { name:'Actuaciones', frente:'dev', client:'Zona 1131', status:'progress', priority:'high', deadline:'2026-07-15', amount:120000, repo:'devimpulso-actuaciones', stack:'Firebase, JavaScript' },
+      { name:'Cursada Psico', frente:'facu', client:'', status:'progress', priority:'high', deadline:'2026-07-01', amount:0, repo:'', stack:'' },
+      { name:'Gestión Sede', frente:'sede', client:'', status:'progress', priority:'medium', deadline:'2026-12-31', amount:0, repo:'', stack:'' },
+    ],
+    clients: [
+      { name:'Zona 1131', type:'educativa', contact:'Director/a Regional', email:'', status:'active', location:'Buenos Aires', since:'2024-03-15' },
+    ],
+    subjects: [
+      { name:'Psicología del Desarrollo', semester:'1° 2026', professor:'', schedule:'Mar y Jue 14-16', status:'cursando', grade1:null, grade2:null },
+      { name:'Psicología Social', semester:'1° 2026', professor:'', schedule:'Lun y Mié 16-18', status:'cursando', grade1:null, grade2:null },
+    ],
+    deliverables: [
+      { name:'TP2 - Observación en aula', subject:'Psicología del Desarrollo', type:'tp', status:'proceso', deadline:'2026-03-10', group:'Con Laura y Martín', grade:null },
+    ],
+    readings: [
+      { title:'Psicología del Desarrollo - Piaget', author:'Jean Piaget', totalPages:320, currentPage:85, deadline:'2026-04-01', subject:'Psicología del Desarrollo', status:'reading', category:'facu', log:[{date:'2026-02-25',pages:10,from:75,to:85}] },
+      { title:'Clean Code', author:'Robert C. Martin', totalPages:464, currentPage:210, deadline:'2026-06-01', subject:'', status:'reading', category:'dev', log:[{date:'2026-02-20',pages:40,from:170,to:210}] },
+    ],
+  };
+}
+
+// =============================================
+// HELPERS
+// =============================================
+const STATUS_MAP = { pending:{label:'⬜ Pendiente',color:'tag-muted'}, progress:{label:'🔄 En progreso',color:'tag-blue'}, review:{label:'👀 En revisión',color:'tag-yellow'}, done:{label:'✅ Completada',color:'tag-green'}, paused:{label:'⏸️ Pausada',color:'tag-purple'} };
+const PRIORITY_MAP = { high:{label:'🔴 Alta',color:'tag-red'}, medium:{label:'🟡 Media',color:'tag-yellow'}, low:{label:'🟢 Baja',color:'tag-green'} };
+const FRENTE_MAP = { dev:{label:'💻 Devimpulso',color:'tag-gold'}, facu:{label:'📚 Facultad',color:'tag-blue'}, sede:{label:'🏫 Sede',color:'tag-purple'} };
+const SIZE_MAP = { big:'🎯 Grande', medium:'🔶 Mediana', small:'🔹 Chica' };
+const CONTEXT_MAP = { home:'🏠 Casa', sede:'🏫 Sede', facu:'📚 Facu', mobile:'📱 Móvil' };
+
+function getToday() { return new Date().toISOString().split('T')[0]; }
+function daysBetween(d1,d2) { return Math.ceil((new Date(d2)-new Date(d1))/(1000*60*60*24)); }
+function getTodayTasks() { return data.tasks.filter(t=>t.date===getToday()); }
+function filterTasks(tasks,ov={}) { const f={...activeFilters,...ov}; return tasks.filter(t=>{ if(f.frente!=='all'&&t.frente!==f.frente) return false; if(f.priority!=='all'&&t.priority!==f.priority) return false; return true; }); }
+
+function calcReadingStats(r) {
+  const pct=r.totalPages>0?Math.round((r.currentPage/r.totalPages)*100):0;
+  const rem=r.totalPages-r.currentPage;
+  const dl=daysBetween(getToday(),r.deadline);
+  const daily=dl>0?Math.ceil(rem/dl):rem;
+  const over=dl<0;
+  let sc='pf-gold'; if(pct>=100)sc='pf-green'; else if(over)sc='pf-red'; else if(dl<=3&&pct<80)sc='pf-orange'; else if(pct>=70)sc='pf-green';
+  let ut='tag-green',ul=`${dl} días`; if(pct>=100){ut='tag-green';ul='✅ Terminado';} else if(over){ut='tag-red';ul=`⚠️ Vencido hace ${Math.abs(dl)}d`;} else if(dl<=3){ut='tag-red';ul=`🔥 ${dl}d`;} else if(dl<=7){ut='tag-orange';ul=`⏰ ${dl}d`;} else{ut='tag-blue';ul=`📅 ${dl}d`;}
+  const tl=(r.log||[]).filter(l=>l.date===getToday()).reduce((s,l)=>s+l.pages,0);
+  return {percent:pct,remaining:rem,daysLeft:dl,dailyNeeded:daily,isOverdue:over,statusColor:sc,urgencyTag:ut,urgencyLabel:ul,todayLogged:tl};
+}
+
+function toast(msg, type='info') {
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div'); t.className=`toast toast-${type}`; t.textContent=msg;
+  c.appendChild(t); setTimeout(()=>t.remove(),3000);
+}
+
+// =============================================
+// APP SHOW
+// =============================================
+function showApp() {
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appContainer').style.display = 'flex';
+  document.body.classList.add('app-mode');
+
+  // Update user info
+  const name = currentUser.displayName || currentUser.email.split('@')[0];
+  document.getElementById('userName').textContent = name;
+  document.getElementById('userEmail').textContent = currentUser.email;
+  document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+
+  // Start listeners
+  ['tasks','projects','clients','subjects','deliverables','readings'].forEach(c => listenToCollection(c));
+  render();
+}
+
+// =============================================
+// NAVIGATION
+// =============================================
+function nav(view) {
+  currentView = view;
+  activeFilters = { frente:'all', priority:'all', status:'all' };
+  if (view==='kanban-dev') { currentView='tasks'; activeFilters.frente='dev'; currentViewTab='kanban'; }
+  if (view==='kanban-facu') { currentView='tasks'; activeFilters.frente='facu'; currentViewTab='kanban'; }
+  if (view==='kanban-sede') { currentView='tasks'; activeFilters.frente='sede'; currentViewTab='kanban'; }
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  event?.target?.closest('.nav-item')?.classList.add('active');
+  closeSidebar(); render();
+}
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
+function setFilter(k,v) { activeFilters[k]=v; render(); }
+
+// =============================================
+// RENDER
+// =============================================
+function render() {
+  const m=document.getElementById('main'); if(!m)return;
+  document.getElementById('dailyBadge').textContent = getTodayTasks().filter(t=>t.status!=='done').length;
+  document.getElementById('readingBadge').textContent = data.readings.filter(r=>r.status==='reading').length;
+  const views={dashboard:renderDashboard,daily:renderDaily,tasks:renderTasks,projects:renderProjects,clients:renderClients,subjects:renderSubjects,deliverables:renderDeliverables,readings:renderReadings};
+  m.innerHTML = (views[currentView]||renderDashboard)();
+}
+
+function openModal(h){document.getElementById('modalContent').innerHTML=h;document.getElementById('modalOverlay').style.display='flex';}
+function closeModal(){document.getElementById('modalOverlay').style.display='none';}
+
+// =============================================
+// DASHBOARD
+// =============================================
+function renderDashboard() {
+  const today=getTodayTasks(), td=today.filter(t=>t.status==='done').length, tp=today.filter(t=>t.status!=='done').length;
+  const prog=today.length>0?Math.round((td/today.length)*100):0;
+  const tb=today.filter(t=>t.size==='big'&&t.status!=='done'), tm=today.filter(t=>t.size==='medium'&&t.status!=='done'), ts=today.filter(t=>t.size==='small'&&t.status!=='done');
+  const ar=data.readings.filter(r=>r.status==='reading');
+  return `
+    <div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><div class="topbar-title">📊 Dashboard</div><div class="topbar-subtitle">${new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div></div></div></div>
+    <div class="content">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Progreso Hoy</div><div class="stat-value" style="color:var(--gold-400)">${prog}%</div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill pf-gold" style="width:${prog}%"></div></div><div class="stat-change" style="color:var(--text-muted)">${td}/${today.length} tareas</div></div>
+        <div class="stat-card"><div class="stat-label">Tareas Pendientes</div><div class="stat-value">${data.tasks.filter(t=>t.status!=='done').length}</div><div class="stat-change" style="color:var(--text-muted)">${tp} para hoy</div></div>
+        <div class="stat-card"><div class="stat-label">Proyectos Activos</div><div class="stat-value">${data.projects.filter(p=>p.status==='progress').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Por Frente</div><div style="margin-top:8px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>💻 Dev</span><span style="font-weight:700">${data.tasks.filter(t=>t.frente==='dev'&&t.status!=='done').length}</span></div><div style="display:flex;justify-content:space-between;font-size:13px"><span>📚 Facu</span><span style="font-weight:700">${data.tasks.filter(t=>t.frente==='facu'&&t.status!=='done').length}</span></div><div style="display:flex;justify-content:space-between;font-size:13px"><span>🏫 Sede</span><span style="font-weight:700">${data.tasks.filter(t=>t.frente==='sede'&&t.status!=='done').length}</span></div></div></div>
+      </div>
+      <div class="section"><div class="section-header"><div class="section-title">🎯 Regla 1-3-5 de Hoy</div><button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Nueva tarea</button></div>
+        ${dailySec('🎯 Tarea Grande',tb,'big')}${dailySec('🔶 Medianas',tm,'medium')}${dailySec('🔹 Chicas',ts,'small')}
+        ${today.length===0?'<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">No hay tareas para hoy</div></div>':''}
+      </div>
+      ${ar.length>0?`<div class="section"><div class="section-header"><div class="section-title">📖 Lecturas</div><button class="btn btn-secondary btn-sm" onclick="nav('readings')">Ver todas</button></div><div class="reading-grid">${ar.slice(0,3).map(r=>readingCardCompact(r)).join('')}</div></div>`:''}
+    </div>`;
+}
+
+function dailySec(title,tasks,size) {
+  if(!tasks.length&&size!=='big') return '';
+  return `<div class="daily-section"><div class="daily-section-header">${title}</div><div class="daily-section-body">${tasks.length===0?`<div class="daily-task"><span style="color:var(--text-muted);font-size:13px">Sin tareas</span></div>`:''}${tasks.map(t=>`<div class="daily-task"><div class="daily-check ${t.status==='done'?'checked':''}" onclick="toggleTask('${t._docId}')">✓</div><div class="daily-task-info"><div class="daily-task-title ${t.status==='done'?'completed':''}">${t.title}</div><div class="daily-task-sub"><span class="tag ${FRENTE_MAP[t.frente]?.color}" style="font-size:10px;padding:1px 6px">${FRENTE_MAP[t.frente]?.label}</span><span>${t.project||''}</span></div></div><span class="tag ${PRIORITY_MAP[t.priority]?.color}" style="font-size:10px">${PRIORITY_MAP[t.priority]?.label}</span></div>`).join('')}</div></div>`;
+}
+
+// =============================================
+// DAILY
+// =============================================
+function renderDaily() {
+  const today=getTodayTasks(), done=today.filter(t=>t.status==='done');
+  return `<div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><div class="topbar-title">📋 Mi Día</div><div class="topbar-subtitle">${done.length}/${today.length} completadas</div></div></div><div class="topbar-actions"><button class="btn btn-primary" onclick="openTaskModal()">+ Nueva</button></div></div>
+    <div class="content">${dailySec('🎯 Grande',today.filter(t=>t.size==='big'),'big')}${dailySec('🔶 Medianas',today.filter(t=>t.size==='medium'),'medium')}${dailySec('🔹 Chicas',today.filter(t=>t.size==='small'),'small')}${today.length===0?'<div class="empty-state"><div class="empty-state-icon">🌟</div><div class="empty-state-text">No hay tareas para hoy</div></div>':''}</div>`;
+}
+
+// =============================================
+// TASKS
+// =============================================
+function renderTasks() {
+  const f=filterTasks(data.tasks);
+  return `<div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><div class="topbar-title">✅ Tareas</div><div class="topbar-subtitle">${f.length} tareas</div></div></div><div class="topbar-actions"><button class="btn btn-primary" onclick="openTaskModal()">+ Nueva</button></div></div>
+    <div class="view-tabs"><div class="view-tab ${currentViewTab==='kanban'?'active':''}" onclick="currentViewTab='kanban';render()">Kanban</div><div class="view-tab ${currentViewTab==='table'?'active':''}" onclick="currentViewTab='table';render()">Tabla</div></div>
+    <div class="filters-bar"><span style="font-size:12px;color:var(--text-muted)">Filtros:</span>${['all','dev','facu','sede'].map(x=>`<div class="filter-chip ${activeFilters.frente===x?'active':''}" onclick="setFilter('frente','${x}')">${x==='all'?'Todos':FRENTE_MAP[x]?.label}</div>`).join('')}<span style="color:var(--border-light);margin:0 4px">|</span>${['all','high','medium','low'].map(x=>`<div class="filter-chip ${activeFilters.priority===x?'active':''}" onclick="setFilter('priority','${x}')">${x==='all'?'Todas':PRIORITY_MAP[x]?.label}</div>`).join('')}</div>
+    <div class="content">${currentViewTab==='kanban'?kanban(f):taskTable(f)}</div>`;
+}
+
+function kanban(tasks) {
+  const cols=[{k:'pending',l:'⬜ Pendiente'},{k:'progress',l:'🔄 En progreso'},{k:'review',l:'👀 En revisión'},{k:'done',l:'✅ Completada'}];
+  return `<div class="kanban">${cols.map(c=>{const ct=tasks.filter(t=>t.status===c.k);return `<div class="kanban-column"><div class="kanban-column-header"><div class="kanban-column-title">${c.l}</div><div class="kanban-column-count">${ct.length}</div></div><div class="kanban-column-body">${ct.map(t=>`<div class="kanban-card" onclick="openTaskModal('${t._docId}')"><div class="kanban-card-title">${t.title}</div><div class="kanban-card-meta"><span class="tag ${FRENTE_MAP[t.frente]?.color}" style="font-size:10px">${FRENTE_MAP[t.frente]?.label}</span><span class="tag ${PRIORITY_MAP[t.priority]?.color}" style="font-size:10px">${PRIORITY_MAP[t.priority]?.label}</span>${t.project?`<span class="tag tag-muted" style="font-size:10px">${t.project}</span>`:''}</div></div>`).join('')}${ct.length===0?'<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Sin tareas</div>':''}</div></div>`;}).join('')}</div>`;
+}
+
+function taskTable(tasks) {
+  return `<div class="table-container"><table><thead><tr><th>Tarea</th><th>Estado</th><th>Prioridad</th><th>Frente</th><th>Proyecto</th><th>Fecha</th><th></th></tr></thead><tbody>${tasks.map(t=>`<tr onclick="openTaskModal('${t._docId}')"><td>${t.title}</td><td><span class="tag ${STATUS_MAP[t.status]?.color}">${STATUS_MAP[t.status]?.label}</span></td><td><span class="tag ${PRIORITY_MAP[t.priority]?.color}">${PRIORITY_MAP[t.priority]?.label}</span></td><td><span class="tag ${FRENTE_MAP[t.frente]?.color}">${FRENTE_MAP[t.frente]?.label}</span></td><td>${t.project||'—'}</td><td>${t.date||'—'}</td><td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();delTask('${t._docId}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+
+// =============================================
+// OTHER VIEWS
+// =============================================
+function renderProjects() {
+  return `<div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><div class="topbar-title">📁 Proyectos</div></div></div><div class="topbar-actions"><button class="btn btn-primary" onclick="openProjectModal()">+ Nuevo</button></div></div>
+    <div class="content"><div class="table-container"><table><thead><tr><th>Proyecto</th><th>Frente</th><th>Cliente</th><th>Estado</th><th>Monto</th><th>Progreso</th></tr></thead><tbody>${data.projects.map(p=>{const tot=data.tasks.filter(t=>t.project===p.name).length;const dn=data.tasks.filter(t=>t.project===p.name&&t.status==='done').length;const pg=tot>0?Math.round((dn/tot)*100):0;return `<tr onclick="openProjectModal('${p._docId}')"><td>${p.name}</td><td><span class="tag ${FRENTE_MAP[p.frente]?.color}">${FRENTE_MAP[p.frente]?.label}</span></td><td>${p.client||'—'}</td><td><span class="tag ${STATUS_MAP[p.status]?.color}">${STATUS_MAP[p.status]?.label}</span></td><td>${p.amount?'$'+p.amount.toLocaleString('es-AR'):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><span>${pg}%</span><div class="progress-bar" style="width:60px"><div class="progress-fill pf-gold" style="width:${pg}%"></div></div></div></td></tr>`;}).join('')}</tbody></table></div></div>`;
+}
+
+function renderClients() {
+  return `<div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><div class="topbar-title">🧑 Clientes</div></div></div><div class="topbar-actions"><button class="btn btn-primary" onclick="openClientModal()">+ Nuevo</button></div></div>
+    <div class="content"><div class="table-container"><table><thead><tr><th>Cliente</th><th>Tipo</th><th>Contacto</th><th>Estado</th><th>Ubicación</th></tr></thead><tbody>${data.clients.map(c=>`<tr onclick="openClientModal('${c._docId}')"><td>${c.name}</td><td><span class="tag tag-gold">${c.type}</span></td><td>${c.contact||'—'}</td><td><span class="tag ${c.status==='active'?'tag-green':'tag-muted'}">${c.status==='active'?'🟢 Activo':'🔴 Inactivo'}</span></td><td>${c.location||'—'}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+function renderSubjects() {
+  return `<div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><div class="topbar-title">📚 Materias</div></div></div><div class="topbar-actions"><button class="btn btn-primary" onclick="openSubjectModal()">+ Nueva</button></div></div>
+    <div class="content"><div class="table-container"><table><thead><tr><th>Materia</th><th>Cuatrimestre</th><th>Horario</th><th>Estado</th><th>P1</th><th>P2</th><th>Prom</th></tr></thead><tbody>${data.subjects.map(s=>{const a=(s.grade1&&s.grade2)?((s.grade1+s.grade2)/2).toFixed(1):'—';return `<tr onclick="openSubjectModal('${s._docId}')"><td>${s.name}</td><td>${s.semester||''}</td><td>${s.schedule||'—'}</td><td><span class="tag ${s.status==='cursando'?'tag-blue':s.status==='aprobada'?'tag-green':'tag-yellow'}">${s.status==='cursando'?'📖 Cursando':s.status==='aprobada'?'✅ Aprobada':'📝 Final'}</span></td><td>${s.grade1??'—'}</td><td>${s.grade2??'—'}</td><td style="font-weight:700">${a}</td></tr>`;}).join('')}</tbody></table></div></div>`;
+}
+
+function renderDeliverables() {
+  return `<div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><div class="topbar-title">📝 Entregas</div></div></div><div class="topbar-actions"><button class="btn btn-primary" onclick="openDeliverableModal()">+ Nueva</button></div></div>
+    <div class="content"><div class="table-container"><table><thead><tr><th>Entrega</th><th>Materia</th><th>Tipo</th><th>Estado</th><th>Deadline</th><th>Nota</th></tr></thead><tbody>${data.deliverables.map(d=>`<tr onclick="openDeliverableModal('${d._docId}')"><td>${d.name}</td><td>${d.subject||''}</td><td><span class="tag tag-gold">${d.type==='tp'?'📄 TP':d.type==='parcial'?'📝 Parcial':'🎓 Final'}</span></td><td><span class="tag ${d.status==='pendiente'?'tag-muted':d.status==='proceso'?'tag-blue':d.status==='entregado'?'tag-yellow':'tag-green'}">${d.status}</span></td><td>${d.deadline||'—'}</td><td style="font-weight:700">${d.grade??'—'}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+// =============================================
+// READINGS VIEW
+// =============================================
+function renderReadings() {
+  const ac=data.readings.filter(r=>r.status==='reading'), co=data.readings.filter(r=>r.status==='done');
+  const tp=data.readings.reduce((s,r)=>s+r.currentPage,0);
+  const tdp=data.readings.reduce((s,r)=>s+(r.log||[]).filter(l=>l.date===getToday()).reduce((ss,l)=>ss+l.pages,0),0);
+  const ap=ac.length>0?Math.round(ac.reduce((s,r)=>s+calcReadingStats(r).percent,0)/ac.length):0;
+  return `<div class="topbar"><div class="topbar-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button><div><div class="topbar-title">📖 Lecturas</div><div class="topbar-subtitle">${ac.length} en curso — ${co.length} completados</div></div></div><div class="topbar-actions"><button class="btn btn-primary" onclick="openReadingModal()">+ Nuevo libro</button></div></div>
+    <div class="view-tabs"><div class="view-tab ${readingViewTab==='cards'?'active':''}" onclick="readingViewTab='cards';render()">📚 Libros</div><div class="view-tab ${readingViewTab==='log'?'active':''}" onclick="readingViewTab='log';render()">📝 Historial</div><div class="view-tab ${readingViewTab==='table'?'active':''}" onclick="readingViewTab='table';render()">📊 Tabla</div></div>
+    <div class="content">
+      <div class="reading-summary"><div class="reading-summary-card"><div class="reading-summary-value" style="color:var(--gold-400)">${ac.length}</div><div class="reading-summary-label">Activos</div></div><div class="reading-summary-card"><div class="reading-summary-value" style="color:var(--green)">${tdp}</div><div class="reading-summary-label">Pág hoy</div></div><div class="reading-summary-card"><div class="reading-summary-value" style="color:var(--blue)">${ap}%</div><div class="reading-summary-label">Promedio</div></div><div class="reading-summary-card"><div class="reading-summary-value">${tp}</div><div class="reading-summary-label">Total leídas</div></div></div>
+      ${readingViewTab==='cards'?readingCards(ac,co):''}${readingViewTab==='log'?readingLog():''}${readingViewTab==='table'?readingTable():''}
+    </div>`;
+}
+
+function readingCards(ac,co) {
+  return `${ac.length>0?`<div class="section"><div class="section-header"><div class="section-title">📖 Leyendo</div></div><div class="reading-grid">${ac.map(r=>readingCard(r)).join('')}</div></div>`:'<div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-text">Agregá un libro para empezar</div></div>'}${co.length>0?`<div class="section"><div class="section-header"><div class="section-title">✅ Completados</div></div><div class="reading-grid">${co.map(r=>readingCard(r)).join('')}</div></div>`:''}`;
+}
+
+function readingCard(r) {
+  const s=calcReadingStats(r), cc=r.category==='dev'?'var(--gold-500)':r.category==='facu'?'var(--blue)':'var(--purple)';
+  return `<div class="reading-card" onclick="openReadingModal('${r._docId}')"><div class="reading-card-accent" style="background:${cc}"></div><div class="reading-card-body">
+    <div class="reading-card-header"><div><div class="reading-card-title">${r.title}</div><div class="reading-card-author">${r.author}${r.subject?' · '+r.subject:''}</div></div><div class="reading-card-percent" style="color:${s.percent>=100?'var(--green)':s.isOverdue?'var(--red)':'var(--gold-400)'}">${s.percent}%</div></div>
+    <div class="reading-card-progress"><div class="progress-bar" style="height:8px;border-radius:4px"><div class="progress-fill ${s.statusColor}" style="width:${Math.min(s.percent,100)}%;border-radius:4px"></div></div></div>
+    <div class="reading-card-stats"><div class="reading-stat"><div class="reading-stat-value">${r.currentPage}</div><div class="reading-stat-label">Actual</div></div><div class="reading-stat"><div class="reading-stat-value">${r.totalPages}</div><div class="reading-stat-label">Total</div></div><div class="reading-stat"><div class="reading-stat-value">${s.remaining}</div><div class="reading-stat-label">Restantes</div></div></div>
+    ${r.status==='reading'?`<div class="reading-daily-target"><div><div class="reading-daily-label">Meta diaria</div><div class="reading-daily-sub">${s.todayLogged>0?'Hoy: '+s.todayLogged+' pág':'Sin registro hoy'}</div></div><div class="reading-daily-value">${s.dailyNeeded} pág/día</div></div>
+    <div class="log-pages-row"><input type="number" class="log-pages-input" id="logInput_${r._docId}" placeholder="Pág." min="1" onclick="event.stopPropagation()"><button class="btn btn-success btn-sm" onclick="event.stopPropagation();logPagesCard('${r._docId}')">📖 Registrar</button></div>`:''}
+    <div class="reading-card-footer"><span class="tag ${s.urgencyTag}" style="font-size:10px">${s.urgencyLabel}</span><span class="tag ${r.category==='dev'?'tag-gold':r.category==='facu'?'tag-blue':'tag-purple'}" style="font-size:10px">${r.category==='dev'?'💻 Dev':'📚 Facu'}</span></div>
+  </div></div>`;
+}
+
+function readingCardCompact(r) {
+  const s=calcReadingStats(r), cc=r.category==='dev'?'var(--gold-500)':r.category==='facu'?'var(--blue)':'var(--purple)';
+  return `<div class="reading-card" onclick="nav('readings')"><div class="reading-card-accent" style="background:${cc}"></div><div class="reading-card-body" style="padding:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="reading-card-title" style="font-size:13px">${r.title}</div><span style="font-family:'JetBrains Mono';font-weight:700;color:var(--gold-400)">${s.percent}%</span></div><div class="progress-bar" style="height:6px;border-radius:3px;margin-bottom:8px"><div class="progress-fill ${s.statusColor}" style="width:${Math.min(s.percent,100)}%;border-radius:3px"></div></div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)"><span>Meta: ${s.dailyNeeded} pág/día</span><span class="tag ${s.urgencyTag}" style="font-size:10px;padding:1px 6px">${s.urgencyLabel}</span></div></div></div>`;
+}
+
+function readingLog() {
+  const all=[]; data.readings.forEach(r=>(r.log||[]).forEach(l=>all.push({...l,book:r.title})));
+  all.sort((a,b)=>b.date.localeCompare(a.date));
+  return `<div class="daily-section"><div class="daily-section-header">📝 Registro</div><div class="daily-section-body">${all.length===0?'<div style="padding:20px;text-align:center;color:var(--text-muted)">Sin registros</div>':''}${all.map(l=>`<div class="reading-log-entry"><div class="reading-log-date">${l.date}</div><div class="reading-log-pages">+${l.pages}</div><div style="flex:1;color:var(--text-secondary)">${l.book}</div><div style="font-size:12px;color:var(--text-muted)">p.${l.from}→${l.to}</div></div>`).join('')}</div></div>`;
+}
+
+function readingTable() {
+  return `<div class="table-container"><table><thead><tr><th>Libro</th><th>Autor</th><th>Progreso</th><th>Actual</th><th>Total</th><th>Meta/día</th><th>Deadline</th><th>Estado</th></tr></thead><tbody>${data.readings.map(r=>{const s=calcReadingStats(r);return `<tr onclick="openReadingModal('${r._docId}')"><td>${r.title}</td><td>${r.author}</td><td><div style="display:flex;align-items:center;gap:8px"><span style="font-family:'JetBrains Mono';font-weight:700">${s.percent}%</span><div class="progress-bar" style="width:60px"><div class="progress-fill ${s.statusColor}" style="width:${Math.min(s.percent,100)}%"></div></div></div></td><td style="font-family:'JetBrains Mono'">${r.currentPage}</td><td style="font-family:'JetBrains Mono'">${r.totalPages}</td><td style="font-family:'JetBrains Mono';font-weight:700;color:var(--gold-400)">${s.dailyNeeded}</td><td>${r.deadline}</td><td><span class="tag ${s.urgencyTag}" style="font-size:10px">${s.urgencyLabel}</span></td></tr>`;}).join('')}</tbody></table></div>`;
+}
+
+// =============================================
+// TASK CRUD
+// =============================================
+function openTaskModal(docId) {
+  const t=docId?data.tasks.find(x=>x._docId===docId):null;
+  const po=data.projects.map(p=>`<option value="${p.name}" ${t?.project===p.name?'selected':''}>${p.name}</option>`).join('');
+  openModal(`<div class="modal-header"><div class="modal-title">${t?'Editar':'Nueva'} Tarea</div><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Tarea</label><input class="form-input" id="f_title" value="${t?t.title:''}" placeholder="¿Qué hay que hacer?"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Estado</label><select class="form-select" id="f_status"><option value="pending" ${t?.status==='pending'?'selected':''}>⬜ Pendiente</option><option value="progress" ${t?.status==='progress'?'selected':''}>🔄 En progreso</option><option value="review" ${t?.status==='review'?'selected':''}>👀 En revisión</option><option value="done" ${t?.status==='done'?'selected':''}>✅ Completada</option><option value="paused" ${t?.status==='paused'?'selected':''}>⏸️ Pausada</option></select></div><div class="form-group"><label class="form-label">Prioridad</label><select class="form-select" id="f_priority"><option value="high" ${t?.priority==='high'?'selected':''}>🔴 Alta</option><option value="medium" ${t?.priority==='medium'?'selected':''}>🟡 Media</option><option value="low" ${t?.priority==='low'?'selected':''}>🟢 Baja</option></select></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Frente</label><select class="form-select" id="f_frente"><option value="dev" ${t?.frente==='dev'?'selected':''}>💻 Devimpulso</option><option value="facu" ${t?.frente==='facu'?'selected':''}>📚 Facultad</option><option value="sede" ${t?.frente==='sede'?'selected':''}>🏫 Sede</option></select></div><div class="form-group"><label class="form-label">Tamaño</label><select class="form-select" id="f_size"><option value="big" ${t?.size==='big'?'selected':''}>🎯 Grande</option><option value="medium" ${t?.size==='medium'?'selected':''}>🔶 Mediana</option><option value="small" ${t?.size==='small'?'selected':''}>🔹 Chica</option></select></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Proyecto</label><select class="form-select" id="f_project"><option value="">—</option>${po}</select></div><div class="form-group"><label class="form-label">Fecha</label><input class="form-input" type="date" id="f_date" value="${t?t.date:getToday()}"></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Contexto</label><select class="form-select" id="f_context"><option value="home" ${t?.context==='home'?'selected':''}>🏠 Casa</option><option value="sede" ${t?.context==='sede'?'selected':''}>🏫 Sede</option><option value="facu" ${t?.context==='facu'?'selected':''}>📚 Facu</option><option value="mobile" ${t?.context==='mobile'?'selected':''}>📱 Móvil</option></select></div><div class="form-group"><label class="form-label">Energía</label><select class="form-select" id="f_energy"><option value="high" ${t?.energy==='high'?'selected':''}>⚡ Alta</option><option value="medium" ${t?.energy==='medium'?'selected':''}>🔋 Media</option><option value="low" ${t?.energy==='low'?'selected':''}>🪫 Baja</option></select></div></div>
+      <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="f_notes" placeholder="Detalles...">${t?t.notes:''}</textarea></div>
+    </div>
+    <div class="modal-footer">${t?`<button class="btn btn-danger btn-sm" onclick="delTask('${t._docId}');closeModal()">Eliminar</button>`:''}<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTask('${t?t._docId:''}')">Guardar</button></div>`);
+}
+
+async function saveTask(docId) {
+  const item={title:$('f_title').value.trim(),status:$('f_status').value,priority:$('f_priority').value,size:$('f_size').value,frente:$('f_frente').value,project:$('f_project').value,context:$('f_context').value,energy:$('f_energy').value,date:$('f_date').value,notes:$('f_notes').value.trim()};
+  if(!item.title)return alert('Ingresá un nombre');
+  if(docId){const t=data.tasks.find(x=>x._docId===docId);if(t)await saveDoc('tasks',{...t,...item});}
+  else await saveDoc('tasks',item);
+  closeModal();
+}
+
+async function delTask(docId) {
+  if(!confirm('¿Eliminar?'))return;
+  await deleteDoc('tasks',docId);
+  data.tasks=data.tasks.filter(t=>t._docId!==docId); render();
+}
+
+async function toggleTask(docId) {
+  const t=data.tasks.find(x=>x._docId===docId);
+  if(t){t.status=t.status==='done'?'pending':'done'; await saveDoc('tasks',t);}
+}
+
+// =============================================
+// GENERIC CRUD MODALS
+// =============================================
+function openProjectModal(docId) {
+  const p=docId?data.projects.find(x=>x._docId===docId):null;
+  openModal(`<div class="modal-header"><div class="modal-title">${p?'Editar':'Nuevo'} Proyecto</div><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="fp_name" value="${p?p.name:''}"></div><div class="form-row"><div class="form-group"><label class="form-label">Frente</label><select class="form-select" id="fp_frente"><option value="dev" ${p?.frente==='dev'?'selected':''}>💻 Dev</option><option value="facu" ${p?.frente==='facu'?'selected':''}>📚 Facu</option><option value="sede" ${p?.frente==='sede'?'selected':''}>🏫 Sede</option></select></div><div class="form-group"><label class="form-label">Estado</label><select class="form-select" id="fp_status"><option value="pending" ${p?.status==='pending'?'selected':''}>📥 Backlog</option><option value="progress" ${p?.status==='progress'?'selected':''}>🔄 En progreso</option><option value="done" ${p?.status==='done'?'selected':''}>✅ Completado</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Cliente</label><input class="form-input" id="fp_client" value="${p?p.client:''}"></div><div class="form-group"><label class="form-label">Prioridad</label><select class="form-select" id="fp_priority"><option value="high" ${p?.priority==='high'?'selected':''}>🔴</option><option value="medium" ${p?.priority==='medium'?'selected':''}>🟡</option><option value="low" ${p?.priority==='low'?'selected':''}>🟢</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Deadline</label><input class="form-input" type="date" id="fp_deadline" value="${p?p.deadline:''}"></div><div class="form-group"><label class="form-label">Monto</label><input class="form-input" type="number" id="fp_amount" value="${p?p.amount:''}"></div></div><div class="form-group"><label class="form-label">Repo</label><input class="form-input" id="fp_repo" value="${p?p.repo:''}"></div><div class="form-group"><label class="form-label">Stack</label><input class="form-input" id="fp_stack" value="${p?p.stack:''}"></div></div><div class="modal-footer">${p?`<button class="btn btn-danger btn-sm" onclick="delGeneric('projects','${p._docId}')">Eliminar</button>`:''}<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveProject('${p?p._docId:''}')">Guardar</button></div>`);
+}
+async function saveProject(d){const i={name:$('fp_name').value.trim(),frente:$('fp_frente').value,status:$('fp_status').value,client:$('fp_client').value.trim(),priority:$('fp_priority').value,deadline:$('fp_deadline').value,amount:parseInt($('fp_amount').value)||0,repo:$('fp_repo').value.trim(),stack:$('fp_stack').value.trim()};if(!i.name)return alert('Nombre requerido');if(d){const p=data.projects.find(x=>x._docId===d);if(p)await saveDoc('projects',{...p,...i});}else await saveDoc('projects',i);closeModal();}
+
+function openClientModal(docId){const c=docId?data.clients.find(x=>x._docId===docId):null;openModal(`<div class="modal-header"><div class="modal-title">${c?'Editar':'Nuevo'} Cliente</div><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="fc_name" value="${c?c.name:''}"></div><div class="form-row"><div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="fc_type"><option value="educativa" ${c?.type==='educativa'?'selected':''}>Educativa</option><option value="gobierno" ${c?.type==='gobierno'?'selected':''}>Gobierno</option><option value="empresa" ${c?.type==='empresa'?'selected':''}>Empresa</option><option value="particular" ${c?.type==='particular'?'selected':''}>Particular</option></select></div><div class="form-group"><label class="form-label">Estado</label><select class="form-select" id="fc_status"><option value="active" ${c?.status==='active'?'selected':''}>Activo</option><option value="inactive">Inactivo</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Contacto</label><input class="form-input" id="fc_contact" value="${c?c.contact:''}"></div><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="fc_email" value="${c?c.email:''}"></div></div><div class="form-group"><label class="form-label">Ubicación</label><input class="form-input" id="fc_location" value="${c?c.location:''}"></div></div><div class="modal-footer">${c?`<button class="btn btn-danger btn-sm" onclick="delGeneric('clients','${c._docId}')">Eliminar</button>`:''}<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveClient('${c?c._docId:''}')">Guardar</button></div>`);}
+async function saveClient(d){const i={name:$('fc_name').value.trim(),type:$('fc_type').value,status:$('fc_status').value,contact:$('fc_contact').value.trim(),email:$('fc_email').value.trim(),location:$('fc_location').value.trim(),since:getToday()};if(!i.name)return alert('Nombre');if(d){const c=data.clients.find(x=>x._docId===d);if(c)await saveDoc('clients',{...c,...i});}else await saveDoc('clients',i);closeModal();}
+
+function openSubjectModal(docId){const s=docId?data.subjects.find(x=>x._docId===docId):null;openModal(`<div class="modal-header"><div class="modal-title">${s?'Editar':'Nueva'} Materia</div><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Materia</label><input class="form-input" id="fs_name" value="${s?s.name:''}"></div><div class="form-row"><div class="form-group"><label class="form-label">Cuatrimestre</label><input class="form-input" id="fs_sem" value="${s?s.semester:''}" placeholder="1° 2026"></div><div class="form-group"><label class="form-label">Estado</label><select class="form-select" id="fs_status"><option value="cursando" ${s?.status==='cursando'?'selected':''}>Cursando</option><option value="aprobada" ${s?.status==='aprobada'?'selected':''}>Aprobada</option><option value="final" ${s?.status==='final'?'selected':''}>Final</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Profesor/a</label><input class="form-input" id="fs_prof" value="${s?s.professor:''}"></div><div class="form-group"><label class="form-label">Horario</label><input class="form-input" id="fs_sch" value="${s?s.schedule:''}"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Nota P1</label><input class="form-input" type="number" id="fs_g1" value="${s?.grade1??''}"></div><div class="form-group"><label class="form-label">Nota P2</label><input class="form-input" type="number" id="fs_g2" value="${s?.grade2??''}"></div></div></div><div class="modal-footer">${s?`<button class="btn btn-danger btn-sm" onclick="delGeneric('subjects','${s._docId}')">Eliminar</button>`:''}<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveSubject('${s?s._docId:''}')">Guardar</button></div>`);}
+async function saveSubject(d){const i={name:$('fs_name').value.trim(),semester:$('fs_sem').value.trim(),status:$('fs_status').value,professor:$('fs_prof').value.trim(),schedule:$('fs_sch').value.trim(),grade1:parseFloat($('fs_g1').value)||null,grade2:parseFloat($('fs_g2').value)||null};if(!i.name)return alert('Nombre');if(d){const s=data.subjects.find(x=>x._docId===d);if(s)await saveDoc('subjects',{...s,...i});}else await saveDoc('subjects',i);closeModal();}
+
+function openDeliverableModal(docId){const d=docId?data.deliverables.find(x=>x._docId===docId):null;const so=data.subjects.map(s=>`<option value="${s.name}" ${d?.subject===s.name?'selected':''}>${s.name}</option>`).join('');openModal(`<div class="modal-header"><div class="modal-title">${d?'Editar':'Nueva'} Entrega</div><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="fd_name" value="${d?d.name:''}"></div><div class="form-row"><div class="form-group"><label class="form-label">Materia</label><select class="form-select" id="fd_sub"><option value="">—</option>${so}</select></div><div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="fd_type"><option value="tp" ${d?.type==='tp'?'selected':''}>TP</option><option value="parcial" ${d?.type==='parcial'?'selected':''}>Parcial</option><option value="final" ${d?.type==='final'?'selected':''}>Final</option></select></div></div><div class="form-row"><div class="form-group"><label class="form-label">Estado</label><select class="form-select" id="fd_status"><option value="pendiente" ${d?.status==='pendiente'?'selected':''}>Pendiente</option><option value="proceso" ${d?.status==='proceso'?'selected':''}>En proceso</option><option value="entregado" ${d?.status==='entregado'?'selected':''}>Entregado</option><option value="aprobado" ${d?.status==='aprobado'?'selected':''}>Aprobado</option></select></div><div class="form-group"><label class="form-label">Deadline</label><input class="form-input" type="date" id="fd_dl" value="${d?d.deadline:''}"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Grupo</label><input class="form-input" id="fd_grp" value="${d?d.group:''}"></div><div class="form-group"><label class="form-label">Nota</label><input class="form-input" type="number" id="fd_grd" value="${d?.grade??''}"></div></div></div><div class="modal-footer">${d?`<button class="btn btn-danger btn-sm" onclick="delGeneric('deliverables','${d._docId}')">Eliminar</button>`:''}<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveDeliverable('${d?d._docId:''}')">Guardar</button></div>`);}
+async function saveDeliverable(d){const i={name:$('fd_name').value.trim(),subject:$('fd_sub').value,type:$('fd_type').value,status:$('fd_status').value,deadline:$('fd_dl').value,group:$('fd_grp').value.trim(),grade:parseFloat($('fd_grd').value)||null};if(!i.name)return alert('Nombre');if(d){const x=data.deliverables.find(y=>y._docId===d);if(x)await saveDoc('deliverables',{...x,...i});}else await saveDoc('deliverables',i);closeModal();}
+
+async function delGeneric(col,docId){if(!confirm('¿Eliminar?'))return;await deleteDoc(col,docId);data[col]=data[col].filter(x=>x._docId!==docId);render();closeModal();}
+
+// =============================================
+// READING CRUD
+// =============================================
+function openReadingModal(docId) {
+  const r=docId?data.readings.find(x=>x._docId===docId):null;
+  const s=r?calcReadingStats(r):null;
+  const so=data.subjects.map(sub=>`<option value="${sub.name}" ${r?.subject===sub.name?'selected':''}>${sub.name}</option>`).join('');
+  openModal(`<div class="modal-header"><div class="modal-title">${r?'📖 Editar':'📖 Nuevo'} Libro</div><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      ${r?`<div style="background:var(--navy-700);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:12px;color:var(--text-muted)">PROGRESO</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Meta: <strong style="color:var(--gold-400)">${s.dailyNeeded} pág/día</strong> · Faltan ${s.remaining} pág · <span class="tag ${s.urgencyTag}" style="font-size:10px">${s.urgencyLabel}</span></div></div><div style="font-size:28px;font-weight:700;font-family:'JetBrains Mono';color:var(--gold-400)">${s.percent}%</div></div>`:''}
+      ${r&&r.status==='reading'?`<div style="background:var(--green-bg);border:1px solid rgba(34,197,94,0.3);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px"><div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:8px">📖 REGISTRAR PÁGINAS</div><div style="display:flex;gap:8px"><input type="number" class="form-input" id="fr_logp" placeholder="Cantidad" min="1" style="flex:1"><button class="btn btn-success" onclick="logPages('${r._docId}')">Registrar</button></div><div class="form-hint">Actual: p.${r.currentPage} — Se recalcula automáticamente</div></div>`:''}
+      <div class="form-group"><label class="form-label">Título</label><input class="form-input" id="fr_title" value="${r?r.title:''}"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Autor</label><input class="form-input" id="fr_author" value="${r?r.author:''}"></div><div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="fr_cat"><option value="facu" ${r?.category==='facu'?'selected':''}>📚 Facultad</option><option value="dev" ${r?.category==='dev'?'selected':''}>💻 Dev</option><option value="sede" ${r?.category==='sede'?'selected':''}>🏫 Sede</option></select></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Total páginas</label><input class="form-input" type="number" id="fr_total" value="${r?r.totalPages:''}"></div><div class="form-group"><label class="form-label">Página actual</label><input class="form-input" type="number" id="fr_cur" value="${r?r.currentPage:'0'}"></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Fecha límite</label><input class="form-input" type="date" id="fr_dl" value="${r?r.deadline:''}"><div class="form-hint">Se calcula pág/día automáticamente</div></div><div class="form-group"><label class="form-label">Materia</label><select class="form-select" id="fr_sub"><option value="">—</option>${so}</select></div></div>
+      <div class="form-group"><label class="form-label">Estado</label><select class="form-select" id="fr_status"><option value="reading" ${r?.status==='reading'?'selected':''}>📖 Leyendo</option><option value="done" ${r?.status==='done'?'selected':''}>✅ Terminado</option><option value="paused" ${r?.status==='paused'?'selected':''}>⏸️ Pausado</option></select></div>
+      ${r&&(r.log||[]).length>0?`<div style="margin-top:16px"><label class="form-label">Historial</label><div style="background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);max-height:120px;overflow-y:auto">${[...(r.log||[])].reverse().map(l=>`<div class="reading-log-entry"><div class="reading-log-date">${l.date}</div><div class="reading-log-pages">+${l.pages}</div><div style="font-size:12px;color:var(--text-muted)">p.${l.from}→${l.to}</div></div>`).join('')}</div></div>`:''}
+    </div>
+    <div class="modal-footer">${r?`<button class="btn btn-danger btn-sm" onclick="delGeneric('readings','${r._docId}')">Eliminar</button>`:''}<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveReading('${r?r._docId:''}')">Guardar</button></div>`);
+}
+
+async function saveReading(docId) {
+  const i={title:$('fr_title').value.trim(),author:$('fr_author').value.trim(),category:$('fr_cat').value,totalPages:parseInt($('fr_total').value)||0,currentPage:parseInt($('fr_cur').value)||0,deadline:$('fr_dl').value,subject:$('fr_sub').value,status:$('fr_status').value};
+  if(!i.title)return alert('Título requerido');
+  if(!i.totalPages)return alert('Total de páginas requerido');
+  if(!i.deadline)return alert('Fecha límite requerida');
+  if(i.currentPage>=i.totalPages)i.status='done';
+  if(docId){const r=data.readings.find(x=>x._docId===docId);if(r)await saveDoc('readings',{...r,...i});}
+  else{i.log=[];await saveDoc('readings',i);}
+  closeModal();
+}
+
+async function logPages(docId) {
+  const pages=parseInt($('fr_logp').value);
+  if(!pages||pages<=0)return alert('Ingresá páginas');
+  const r=data.readings.find(x=>x._docId===docId); if(!r)return;
+  const from=r.currentPage, to=Math.min(r.currentPage+pages,r.totalPages);
+  r.currentPage=to;
+  if(!r.log)r.log=[];
+  r.log.push({date:getToday(),pages:to-from,from,to});
+  if(r.currentPage>=r.totalPages){r.status='done';r.currentPage=r.totalPages;}
+  await saveDoc('readings',r);
+  closeModal();
+  if(r.status==='done')toast(`🎉 ¡Terminaste "${r.title}"!`,'success');
+}
+
+async function logPagesCard(docId) {
+  const input=document.getElementById('logInput_'+docId);
+  const pages=parseInt(input?.value);
+  if(!pages||pages<=0)return alert('Ingresá páginas');
+  const r=data.readings.find(x=>x._docId===docId); if(!r)return;
+  const from=r.currentPage, to=Math.min(r.currentPage+pages,r.totalPages);
+  r.currentPage=to;
+  if(!r.log)r.log=[];
+  r.log.push({date:getToday(),pages:to-from,from,to});
+  if(r.currentPage>=r.totalPages){r.status='done';r.currentPage=r.totalPages;}
+  await saveDoc('readings',r);
+  if(r.status==='done')toast(`🎉 ¡Terminaste "${r.title}"!`,'success');
+}
+
+// HELPER
+function $(id){return document.getElementById(id);}
+</script>
+</body>
+</html>

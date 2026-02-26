@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devimpulso Hub</title>
+<script>
+  // GitHub Pages SPA redirect
+  // Redirige todas las rutas 404 al index.html
+  sessionStorage.redirect = location.href;
+  location.replace(location.pathname.split('/').slice(0, -1).join('/') + '/');
+</script>
+</head>
+<body></body>
+</html>

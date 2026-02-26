@@ -1,0 +1,101 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =============================================
+    // REGLAS DE SEGURIDAD - Devimpulso Hub
+    // =============================================
+    // Principio: cada usuario solo accede a SUS datos.
+    // Estructura: /users/{userId}/{collection}/{docId}
+    // =============================================
+
+    // Bloquear todo por defecto
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Documento del usuario (perfil)
+    match /users/{userId} {
+      // Solo el propio usuario puede leer/escribir su perfil
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false; // No se puede borrar el perfil
+
+      // =============================================
+      // COLECCIONES DEL USUARIO
+      // =============================================
+
+      // TAREAS
+      match /tasks/{taskId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasAny(['title', 'status'])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 500;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // PROYECTOS
+      match /projects/{projectId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasAny(['name'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 200;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // CLIENTES
+      match /clients/{clientId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasAny(['name'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // MATERIAS
+      match /subjects/{subjectId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasAny(['name'])
+          && request.resource.data.name is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ENTREGAS
+      match /deliverables/{deliverableId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasAny(['name'])
+          && request.resource.data.name is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // LECTURAS
+      match /readings/{readingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasAny(['title', 'totalPages'])
+          && request.resource.data.title is string
+          && request.resource.data.totalPages is int
+          && request.resource.data.totalPages > 0
+          && request.resource.data.totalPages <= 10000;
+        allow update: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.currentPage is int
+          && request.resource.data.currentPage >= 0
+          && request.resource.data.currentPage <= request.resource.data.totalPages;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
