@@ -542,13 +542,22 @@ if (auth) {
       document.getElementById('loadingScreen').style.display = 'flex';
       document.getElementById('authScreen').style.display = 'none';
       try {
-        await loadUserData();
-        showApp();
+        await Promise.race([
+          loadUserData(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000))
+        ]);
       } catch(e) {
-        console.error('Error cargando datos:', e);
-        // Mostrar app igual con datos vacíos
-        showApp();
-        toast('Error cargando datos. Puede que Firestore no esté configurado aún.', 'error');
+        console.error('Carga de datos falló o timeout:', e);
+        if (e.message === 'timeout') {
+          toast('La carga tardó demasiado. Verificá que Firestore esté creado en Firebase Console.', 'error');
+        }
+      }
+      // SIEMPRE mostrar la app, con o sin datos
+      try { showApp(); } catch(ex) { 
+        console.error('showApp error:', ex);
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
+        document.body.classList.add('app-mode');
       }
     } else {
       currentUser = null;
@@ -678,25 +687,39 @@ async function loadUserData() {
   const userRef = db.collection('users').doc(uid);
 
   try {
+    // Test Firestore connection with a quick read
     const userDoc = await userRef.get();
-    if (!userDoc.exists) await initializeUserData(currentUser);
-
-    const collections = ['tasks','projects','clients','subjects','deliverables','readings'];
-    for (const col of collections) {
-      try {
-        const snapshot = await userRef.collection(col).get();
-        data[col] = snapshot.docs.map(doc => ({ ...doc.data(), _docId: doc.id }));
-      } catch(colErr) {
-        console.warn(`Error cargando ${col}:`, colErr);
-        data[col] = [];
+    
+    if (!userDoc.exists) {
+      await initializeUserData(currentUser);
+      // Re-check if initialization worked
+      const check = await userRef.get();
+      if (!check.exists) {
+        toast('No se pudo inicializar Firestore. Verificá los permisos.', 'error');
+        return; // Bail out — don't try to load empty collections
       }
     }
+
+    // Load all collections in parallel (much faster)
+    const collections = ['tasks','projects','clients','subjects','deliverables','readings'];
+    const results = await Promise.allSettled(
+      collections.map(col => userRef.collection(col).get())
+    );
+    
+    results.forEach((result, i) => {
+      if (result.status === 'fulfilled') {
+        data[collections[i]] = result.value.docs.map(doc => ({ ...doc.data(), _docId: doc.id }));
+      } else {
+        console.warn(`Error cargando ${collections[i]}:`, result.reason);
+        data[collections[i]] = [];
+      }
+    });
+
     setSyncStatus('ok');
   } catch(e) {
     console.error('Error cargando datos:', e);
     setSyncStatus('error');
-    // Si Firestore no está listo, seguimos con datos vacíos
-    toast('Firestore no disponible. Verificá la configuración en Firebase Console.', 'error');
+    toast('Firestore no disponible. Creá la base de datos en Firebase Console.', 'error');
   }
 }
 
@@ -838,14 +861,19 @@ function showApp() {
   document.body.classList.add('app-mode');
 
   // Update user info
-  const name = currentUser.displayName || currentUser.email.split('@')[0];
-  document.getElementById('userName').textContent = name;
-  document.getElementById('userEmail').textContent = currentUser.email;
-  document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+  try {
+    const name = currentUser.displayName || currentUser.email.split('@')[0];
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userEmail').textContent = currentUser.email;
+    document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+  } catch(e) { console.warn('Error setting user info:', e); }
 
-  // Start listeners
-  ['tasks','projects','clients','subjects','deliverables','readings'].forEach(c => listenToCollection(c));
-  render();
+  // Start listeners (won't crash if Firestore unavailable)
+  ['tasks','projects','clients','subjects','deliverables','readings'].forEach(c => {
+    try { listenToCollection(c); } catch(e) { console.warn('Listener error:', c, e); }
+  });
+  
+  try { render(); } catch(e) { console.error('Render error:', e); }
 }
 
 // =============================================
@@ -1130,4 +1158,3 @@ function $(id){return document.getElementById(id);}
 </script>
 </body>
 </html>
-
