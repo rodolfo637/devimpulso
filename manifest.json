@@ -1,0 +1,43 @@
+{
+  "name": "Devimpulso Hub",
+  "short_name": "Hub",
+  "description": "Centro de Operaciones Estudiantil y de Desarrollo",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0a1628",
+  "background_color": "#0a1628",
+  "lang": "es",
+  "categories": ["productivity", "education"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%230a1628'/><text y='145' x='96' font-size='120' text-anchor='middle'>⚡</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%230a1628'/><text y='390' x='256' font-size='320' text-anchor='middle'>⚡</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Mi Día",
+      "url": "./#daily",
+      "description": "Ver tareas de hoy"
+    },
+    {
+      "name": "Calendario",
+      "url": "./#calendar",
+      "description": "Ver calendario académico"
+    },
+    {
+      "name": "Pomodoro",
+      "url": "./#pomodoro",
+      "description": "Iniciar sesión de estudio"
+    }
+  ]
+}
